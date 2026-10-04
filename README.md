@@ -37,6 +37,9 @@ The current capture program is **`slide_recorder.py`**. It uses Picamera2 for ca
 6. Connect the Raspberry Pi's power adapter and turn it on.  
 
 ## Start the capture application
+Note: A wireless keyboard/mouse combo can be utilized instead of the USB keyboard and the mouse.  
+The plan is also to add the slide forward/backward control via the keyboard at some point and if it works ok,  
+this document will be updated accordingly.
 
 Double click on SlideShow app.
 
