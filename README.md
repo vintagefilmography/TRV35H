@@ -19,32 +19,28 @@ The photos below show the outside of the projector, the interior camera and Rasp
 - Raspberry Pi with an attached **Raspberry Pi HQ (IMX477) camera**, supported lens, and CSI ribbon connection.
 - Display connected to the Raspberry Pi to view the live camera image (HDMI is labeled in the photo).
 - Keyboard for controlling capture, exposure, and color balance.
-- Power supplies and cables appropriate to the projector and Raspberry Pi. The photographs do **not** establish the Pi's power supply voltage, source, or complete pinout; check these independently.
+- Power supplies and cables appropriate to the projector and Raspberry Pi. The photographs do **not** show how RPI is connected.
+- The RPI board is powered from the regular RPI adapter.  
+- The HDMI and the USB cables are brought out to be connected to a monitor and a USB hub that can be connected to a keyboard and a mouse. 
+- A cutout is made to the projector side cover to accommodate cable routing.  
 - Raspberry Pi OS with Python 3, **Picamera2** and **OpenCV (`cv2`)**, plus the Raspberry Pi camera stack. The script also uses standard-library modules and can use `xrandr` or `tkinter` to detect screen dimensions.
 
-The current capture program is **`capture_image_fullscreen_exposure_color_restore.py`**. It uses Picamera2 for camera access and OpenCV for the full-screen window. It deliberately does **not** use a Qt camera-preview widget.
+The current capture program is **`slide_recorder.py`**. It uses Picamera2 for camera access and OpenCV for the full-screen window. It deliberately does **not** use a Qt camera-preview widget in order to give access to the keyboard while the preview is running.  
 
 ## Connections and setup
 
 1. **Power off and unplug the projector and Raspberry Pi** before inspecting or changing any internal components. Keep clear of internal AC wiring, moving parts, and hot components.
-2. Confirm that the camera is securely positioned in the projector's slide optical path, as shown in the internal photograph. Adjust focus and physical alignment as required for the slide to appear sharp and properly centered.
+2. Confirm that the camera is securely positioned in the projector's slide optical path, as shown in the internal photograph. Adjust focus and physical alignment as required for the slide to appear sharp and properly centered. It should be noted that the adjustments can be made even  with the projector bottom cover installed. Undo the screw securing the side cover and open it up. The camera lens will be within the reach and it can be turned to do the focus adjustment. A chrome plated machine screw, visible from the opening, can be use to do the vertical adjustment. For horizontal image adjustment, the bottom cover has to be opened and the 4 camera bracket mounting screws loosened and the whole camera assembly has to be slid one way or the other way until the preview image is centered. 
 3. Ensure that the camera ribbon cable is seated correctly at the camera and the Raspberry Pi. Avoid sharp bends and interference with moving parts.
 4. Connect the Raspberry Pi to the display through the **HDMI connection** indicated in the overall interior photo.
-5. Connect the keyboard to the Pi using an available USB port. The photo labels a **USB out** connection, but the image alone does not establish its internal wiring or USB role; verify it before use.
-6. Connect the Raspberry Pi's proper power source. The photo labels the **Power** area but is not a wiring schematic. **Do not assume that projector power can be fed directly to the Pi.**
-7. Start the Pi, and confirm that the camera is detected and operational before launching the capture application.
+5. Connect the keyboard to the Pi using an available USB port. 
+6. Connect the Raspberry Pi's power adapter and turn it on.  
 
 ## Start the capture application
 
-Place the script in a working directory, open a terminal in that directory, and run:
+Double click on SlideShow app.
 
-```bash
-python3 capture_image_fullscreen_exposure_color_restore.py
-```
-
-If you are using a virtual environment, ensure that it provides access to your installed Picamera2 and OpenCV packages. The program creates an OpenCV window and requires a working graphical desktop session; it is not a terminal-only application.
-
-**Images are saved to the process's current working directory** (the directory from which you launch the command), *not necessarily the directory containing the script*. The program prints the selected output location when it starts.
+**Images are saved to hqcam directory** 
 
 ### Keyboard shortcuts
 
@@ -138,7 +134,7 @@ Keep these files in the same directory as this README so the relative photo link
 
 ```text
 README.md
-capture_image_fullscreen_exposure_color_restore.py
+slide_recorder.py
 trv35.png
 rpi_camera.jpg
 output_connections.jpg
