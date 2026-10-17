@@ -1,195 +1,182 @@
-# Slide Recorder with GPIO Relay Control
+# ELMO TRV-35G Slide Digitizer
 
-This project captures film slides full-screen with a Raspberry Pi HQ Camera and adds keyboard control for a 2-channel relay module so the projector can be stepped forward or backward from the keyboard.
+This project converts an **ELMO TRV-35G slide projector/viewer** into a slide-digitizing station by mounting a Raspberry Pi camera inside the projector and using a Raspberry Pi to capture images. The original slide-handling mechanism remains the means of presenting slides to the camera.
 
-The current software file is:
+The photos below show the outside of the projector, the interior camera and Raspberry Pi, and the labeled external connections. They document this particular build; component placement and wiring may differ in other units.
 
-- `slide_recorder_gpio.py`
+![ELMO TRV-35G projector/viewer](trv35.png)
+*ELMO TRV-35G exterior.*
 
-## Main features
+![Internal Raspberry Pi and camera](rpi_camera.jpg)
+*Camera mounted inside the projector (left) and Raspberry Pi board (right). The camera connects to the Pi through a ribbon cable.*
 
-- Full-screen live preview
-- Save images as sequential JPEGs: `slide1.jpg`, `slide2.jpg`, ...
-- Manual/auto exposure toggle
-- Manual color adjustment mode
-- Relay pulse output for projector control
-- On-screen status messages
+![Labeled connections](output_connections.jpg)
+*Overall interior view with labels identifying the HDMI, USB output, and power areas. Verify the exact connector and voltage before connecting or changing wiring.*
 
-## Keyboard controls
+## Equipment and software
 
-| Key | Function |
-|---|---|
-| `Space` | Save current slide image |
-| `f` | Pulse **GPIO17** LOW for 300 ms (forward) |
-| `b` | Pulse **GPIO27** LOW for 300 ms (backward) |
-| `m` | Toggle auto/manual exposure |
-| `c` | Toggle color mode on/off |
-| `r` | Select **red** color adjustment (in color mode) |
-| `g` | Select **green** color adjustment (in color mode) |
-| `u` | Increase selected setting |
-| `d` | Decrease selected setting |
-| `q` or `Esc` | Quit |
+- ELMO TRV-35G projector/viewer, modified to accommodate the camera and computer.
+- Raspberry Pi with an attached **Raspberry Pi HQ (IMX477) camera**, supported lens, and CSI ribbon connection.
+- Display connected to the Raspberry Pi to view the live camera image (HDMI is labeled in the photo).
+- Keyboard for controlling capture, exposure, and color balance.
+- Power supplies and cables appropriate to the projector and Raspberry Pi. The photographs do **not** establish the Pi's power supply voltage, source, or complete pinout; check these independently.
+- Raspberry Pi OS with Python 3, **Picamera2** and **OpenCV (`cv2`)**, plus the Raspberry Pi camera stack. The script also uses standard-library modules and can use `xrandr` or `tkinter` to detect screen dimensions.
 
-## GPIO behavior
+The current capture program is **`slide_recorder_gpio.py`**. It uses Picamera2 for camera access and OpenCV for the full-screen window. It deliberately does **not** use a Qt camera-preview widget.
 
-The GPIO outputs are implemented as **open-collector / open-drain style pulses**:
+## Connections and setup
 
-- **Idle:** GPIO is set as **input** (high impedance)
-- **Active pulse:** GPIO is switched to **output LOW**
-- **Pulse width:** 300 ms
-- The GPIO is **never driven HIGH**
+1. **Power off and unplug the projector and Raspberry Pi** before inspecting or changing any internal components. Keep clear of internal AC wiring, moving parts, and hot components.
+2. Confirm that the camera is securely positioned in the projector's slide optical path, as shown in the internal photograph. Adjust focus and physical alignment as required for the slide to appear sharp and properly centered.
+3. Ensure that the camera ribbon cable is seated correctly at the camera and the Raspberry Pi. Avoid sharp bends and interference with moving parts.
+4. Connect the Raspberry Pi to the display through the **HDMI connection** indicated in the overall interior photo.
+5. Connect the keyboard to the Pi using an available USB port. The photo labels a **USB out** connection, but the image alone does not establish its internal wiring or USB role; verify it before use.
+6. Connect the Raspberry Pi's proper power source. The photo labels the **Power** area but is not a wiring schematic. **Do not assume that projector power can be fed directly to the Pi.**
+7. Start the Pi, and confirm that the camera is detected and operational before launching the capture application.
 
-This is useful when the relay input side is pulled up externally and you want the Pi to only sink current.
+## Start the capture application
 
-## Wiring notes
-
-Your earlier relay-board setup discussion indicated a split-supply relay module configuration:
-
-- **Relay coil supply:** 5V
-- **Logic/input supply:** 3.3V
-- **Common ground:** required
-- **Jumper between logic and relay supply:** removed
-
-This avoids exposing Raspberry Pi GPIO pins to 5V.
-
-## Wiring diagram
-
-Below is the wiring diagram you provided:
-
-![Elmo TRV35 RPI Wiring Diagram](elmo_trv35_rpi_wiring_diagram.png)
-
-### Important mapping note
-
-The provided wiring diagram labels the relay inputs as:
-
-- **IN1 → GPIO27**
-- **IN2 → GPIO17**
-
-However, the current software behavior is:
-
-- **`f` key → GPIO17**
-- **`b` key → GPIO27**
-
-So the software mapping follows the **GPIO numbers**, not the relay channel labels. If your wiring matches the diagram, then:
-
-- pressing **`f`** will trigger the relay input connected to **GPIO17**
-- pressing **`b`** will trigger the relay input connected to **GPIO27**
-
-If you want `f` and `b` to correspond to specific relay channels instead, either:
-
-1. swap the relay input wires, or
-2. change the GPIO assignment constants in the Python file.
-
-## Default GPIO assignments in the script
-
-Inside `slide_recorder_gpio.py`:
-
-```python
-FORWARD_GPIO = 17  # BCM numbering; physical pin 11
-REVERSE_GPIO = 27  # BCM numbering; physical pin 13
-```
-
-## Raspberry Pi header pins used
-
-| Function | BCM GPIO | Physical pin |
-|---|---:|---:|
-| Forward pulse | GPIO17 | 11 |
-| Backward pulse | GPIO27 | 13 |
-| 3.3V logic supply | — | 1 |
-| 5V relay supply | — | 2 |
-| Ground | — | 6 |
-
-## Required packages
-
-Install the required Python packages on Raspberry Pi OS:
-
-```bash
-sudo apt update
-sudo apt install -y python3-opencv python3-rpi.gpio python3-picamera2
-```
-
-Depending on your setup, `python3-libcamera` may also already be present as part of the camera stack.
-
-## Run the program
-
-From the folder containing the script:
+Place the script in a working directory, open a terminal in that directory, and run:
 
 ```bash
 python3 slide_recorder_gpio.py
 ```
 
-Saved images will be written to the current working directory.
+If you are using a virtual environment, ensure that it provides access to your installed Picamera2 and OpenCV packages. The program creates an OpenCV window and requires a working graphical desktop session; it is not a terminal-only application.
 
-## File naming
+**Images are saved to the process's current working directory** (the directory from which you launch the command), *not necessarily the directory containing the script*. The program prints the selected output location when it starts.
 
-Captured slide images are saved as:
+### Keyboard shortcuts
 
-- `slide1.jpg`
-- `slide2.jpg`
-- `slide3.jpg`
-- ...
+| Key | Action |
+| --- | --- |
+| **Space** | Capture and save the current slide as the next numbered JPEG. |
+| **F** | Pulse GPIO17 LOW for 300 ms to advance a slide (forward). |
+| **B** | Pulse GPIO27 LOW for 300 ms to reverse a slide (backward). |
+| **M** | Switch to exposure mode and toggle automatic/manual exposure. |
+| **C** | Enter manual color adjustment; press again to leave and restore automatic white balance. |
+| **R** | In color mode, select the red adjustment. |
+| **G** | In color mode, select the relative green adjustment. |
+| **U** | Increase the selected manual exposure or color adjustment by about 10%. |
+| **D** | Decrease the selected manual exposure or color adjustment by dividing by 1.1. |
+| **Q** or **Esc** | Quit the program cleanly. |
 
-The script automatically finds the next available number.
+**Exposure adjustment:** The application starts in exposure mode with automatic exposure enabled. Press **M** to switch to manual exposure. The camera reads the latest exposure time and analogue gain and locks both. Press **U/D** to change *exposure time* while holding analogue gain fixed. Press **M** again to restore automatic exposure. When exposure mode is selected but auto exposure is enabled, **U/D** do not change exposure; press **M** first.
 
-## Exposure control
+**Color adjustment and automatic restoration:** Press **C** to enter color mode. The script reads the current automatic white-balance red and blue gains, remembers those starting values, disables automatic white balance (`AwbEnable: False`), and locks the gains for manual adjustment. In color mode:
 
-Press `m` to toggle manual exposure.
+1. Press **R**, then **U/D**, to raise/lower the **red gain**.
+2. Press **G**, then **U/D**, to raise/lower **green relative to red and blue**.
+3. Press **C again** to exit color mode: the script switches automatic white balance back on (`AwbEnable: True`) and returns the keyboard to exposure mode. The preview briefly displays `COLOR AUTO RESTORED (automatic white balance on)`.
 
-When manual exposure is enabled:
+**What “restore” means:** The program remembers the original automatic gain values for reference and prints them to the terminal when you exit color mode. **It does not freeze the color gains at those original numbers.** Instead, it re-enables the camera's automatic white-balance algorithm, which may select different gains as it adapts to the current slide lighting. Entering color mode again reads and locks the then-current automatic gains. If you want to keep a manually adjusted color balance while capturing several slides, **stay in color mode**; use **Space** to capture without leaving it.
 
-- `u` increases exposure
-- `d` decreases exposure
+**Important:** The camera's `ColourGains` control has **red and blue** gains, not an independent green gain. To make green stronger *relative* to the other channels, the script reduces **both red and blue gains**; to make it weaker, it increases both. This is relative color-balance adjustment, not an independent hue-wheel control. Red is selected initially when entering color mode. **M** returns to exposure mode and toggles auto/manual exposure, but it **does not** restore automatic white balance; press **C while still in color mode** when you want automatic color restored.
+**On-screen feedback:** Exposure and color changes display a status message in the upper-left corner of the **preview for approximately one second**, then clear automatically. Status messages also print to the terminal. This overlay is not present in saved JPEGs. Color and exposure adjustments themselves **do affect** the captured JPEGs.
 
-## Color control
+### Typical slide capture workflow
 
-Press `c` to enter color mode.
+1. Put a slide in the projector/viewer and illuminate it as required by the original device.
+2. Start the capture script and ensure the **OpenCV window has keyboard focus** (click it once if needed).
+3. Check slide positioning and focus in the live preview.
+4. For manual exposure, press **M**, then **U/D** until the brightness looks right.
+5. To adjust color balance, press **C**, then **R** or **G** and **U/D**. Keep color mode active while capturing slides if you want the manual balance to persist. Press **C** again to restore automatic white balance and return to exposure mode.
+6. Press **Space** to save the slide. The terminal prints the filename when saved.
+7. Press **F** to advance the projector (GPIO17, 300 ms LOW pulse), or **B** to reverse (GPIO27, 300 ms LOW pulse), then repeat. Manual exposure carries over until changed. Manual color settings carry over while automatic white balance is disabled; pressing **C** to exit color mode restores automatic white balance.
+8. Press **Q** or **Esc** when finished.
 
-In color mode:
+### Saved images and display behavior
 
-- `r` selects red adjustment
-- `g` selects green adjustment
-- `u` / `d` adjust the selected color
+- Saved image size: **4056 × 3040 pixels**, JPEG, from Picamera2's **main** stream.
+- Live preview stream: **960 × 720 pixels**, YUV420, converted for OpenCV display.
+- The preview is resized and **center-cropped as needed to fill the display without stretching**. For a wide monitor, some of the live preview is cropped; the saved JPEG retains the complete camera frame.
+- Filenames start at **`slide1.jpg`**, then **`slide2.jpg`**, **`slide3.jpg`**, etc.
+- At startup, the program scans existing files matching `slide<number>.jpg` in the output directory and continues with **one more than the largest existing number**. This avoids reusing the earlier sequence numbers for an ordinary single running instance.
 
-Press `c` again to return to automatic white balance / normal mode.
+Example terminal messages:
 
-## Exit behavior
+```text
+Preview: 1920 x 1080 | JPEG: 4056 x 3040
+Images directory: /path/to/working-directory | next: slide1.jpg
+SPACE capture | M auto/manual exposure | C color/exposure mode | R/G select color | F/B relay pulses | U/D adjust | Q/ESC exit
+Saved slide1.jpg
+EXPOSURE MANUAL  10.0 ms  gain 1.00x
+COLOR RED  R gain 1.50  B gain 1.20
+```
 
-When the program exits:
+*The numerical exposure, color gains, screen dimensions, and paths above are illustrative; actual values depend on the camera, monitor, and environment.*
 
-- relay pulse outputs are released back to high impedance
-- camera is stopped and closed
-- OpenCV windows are destroyed
+## Camera configuration details
+
+The current script explicitly loads the **`imx477.json`** tuning file and changes the `rpi.alsc` algorithm's `n_iter` setting to `0` if that tuning algorithm is present. This is a build-specific tuning choice: do not assume it is appropriate for a different sensor or camera tuning file.
+
+Automatic screen-size detection uses `xrandr` when available, falls back to `tkinter`, and otherwise assumes 1920 × 1080. If automatic detection is wrong, edit the line near the beginning of the script:
+
+```python
+SCREEN_SIZE = (1920, 1080)  # Replace with the monitor's actual resolution
+```
+
+The configured capture resolution is the full-size **main** stream. Preview text is drawn *only* onto the resized preview frame; full-resolution JPEGs are captured directly from `main`. Color and exposure controls are applied by the camera pipeline to both streams.
 
 ## Troubleshooting
 
-### Relay does not trigger
+| Issue | Check |
+| --- | --- |
+| **Nothing happens when pressing keys** | Click once in the OpenCV full-screen window to give it focus; verify that the desktop is receiving keyboard input. |
+| **White border or tiny image** | Check the `Preview:` dimensions printed in the terminal; set `SCREEN_SIZE` explicitly to your display's resolution if needed. Do not derive screen dimensions from the preview image rectangle. |
+| **Preview cuts off the edges** | This is expected when filling a monitor with a different aspect ratio. It does **not** crop the saved JPEG. |
+| **Image too bright or too dark** | Use **M** to lock exposure, then **U/D** to change exposure time. Return to auto with **M** if desired. |
+| **U/D don't change exposure** | Return to exposure mode with **C** if currently in color mode, and enable manual exposure with **M**. |
+| **U/D change color instead of brightness** | The program is in color mode. Press **C** to return to exposure mode, then **M** if manual exposure is not enabled. |
+| **R or G has no effect** | Press **C** to enter color mode first. Then select **R** or **G**, followed by **U/D** to actually change the color balance. |
+| **Color does not immediately match its earlier automatic appearance** | Press **C** again *while in color mode* to turn automatic white balance back on; its gains may take a moment to adapt, and may differ from the original snapshot. If you left color mode with **M**, press **C** to enter color mode and **C** again to restore automatic white balance. |
+| **Camera does not start** | Confirm the CSI ribbon orientation and seating, IMX477 camera support, required Picamera2/camera software, and availability of `imx477.json`. |
+| **Pictures saved to an unexpected folder** | Check the `Images directory:` message. Launch the program from the desired folder. |
+| **Capture takes a moment** | Full-resolution JPEG saving is synchronous in the current script; wait for `Saved slideN.jpg` before advancing the slide. |
 
-- Confirm relay-board jumper is removed if using split supplies
-- Confirm relay logic side is powered from **3.3V**, not 5V
-- Confirm coil side is powered from **5V**
-- Confirm grounds are common
-- Confirm the relay input is compatible with open-collector style drive
-- Verify wiring of GPIO17 and GPIO27
+## Projector relay wiring and keyboard control
 
-### Wrong relay moves the projector
+The additional drawing documents the ELMO TRV35/Raspberry Pi/2-channel relay wiring:
 
-This usually means the two relay input wires are swapped relative to the intended software function.
+![ELMO TRV35 Raspberry Pi wiring diagram](elmo_trv35_rpi_wiring_diagram.png)
+*User-supplied relay/projector wiring diagram. Check the actual board pin labels and relay contact wiring before applying power.*
 
-### Preview opens but keys seem wrong
+**Software GPIO mapping** (BCM numbering):
 
-Make sure the preview window has keyboard focus.
+| Key | GPIO | Pi header pin | Signal |
+| --- | --- | --- | --- |
+| **F** (forward) | GPIO17 | Physical pin 11 | Pull LOW for 300 ms |
+| **B** (backward) | GPIO27 | Physical pin 13 | Pull LOW for 300 ms |
 
-### Camera errors
+The diagram labels **IN1 → GPIO27** and **IN2 → GPIO17**, so with that wiring **B operates IN1** and **F operates IN2**. The keys follow the GPIO numbers in the Python program, not relay channel numbering.
 
-Check that:
+**Open-collector emulation:** The Raspberry Pi GPIO is configured as an input (high impedance, internal pulls off) while idle, and driven as output LOW for each pulse. It is **never intentionally driven HIGH**. The two pins return to high impedance on normal program exit. This is software emulation of an open collector, not true electrical isolation.
 
-- Raspberry Pi camera interface is enabled
-- the HQ camera is connected correctly
-- `imx477.json` is available for the tuning file
+**Important safety check before powering the relay:** The diagram's summary table shows **VCC → 5V**, but this is *not sufficient to establish GPIO safety*. Raspberry Pi GPIOs are not 5V tolerant. Your relay board was previously described as having separate **RY-VCC/JD-VCC (coil power)** and **VCC (logic power)** with a removable jumper. For that split-supply arrangement, remove the jumper and use the board's verified **5V coil supply** and **3.3V logic supply**, with the appropriate common ground, *only after verifying the actual board labels and input circuit*. Measure the idle IN1/IN2 voltages relative to GND before connecting the GPIO wires: they must not rise above 3.3V. Do not use the simplified **VCC → 5V** row to connect 5V directly to a logic supply that pulls GPIO inputs to 5V.
 
-## Files
+If powering the relay causes the Pi to shut down, disconnect it and troubleshoot power/current draw and the pinout before trying again. Never connect the projector's 24V circuitry directly to a GPIO; the relay contacts handle the isolated projector switching circuit.
 
-- `slide_recorder_gpio.py` — camera capture and relay-control program
-- `README.md` — this file
-- `elmo_trv35_rpi_wiring_diagram.png` — user-provided wiring diagram
+### GPIO software requirements
 
+The current script imports `RPi.GPIO` and uses a background timer for each pulse. On Raspberry Pi OS, install its dependency if missing:
+
+```bash
+sudo apt install python3-rpi.gpio
+```
+
+Set `RELAY_PULSE_SECONDS = 0.300` in `slide_recorder_gpio.py` to change the pulse width. Keep the preview window focused so keyboard commands are received.
+
+## Project files
+
+Keep these files in the same directory as this README so the relative photo links display correctly:
+
+```text
+README.md
+slide_recorder_gpio.py
+trv35.png
+rpi_camera.jpg
+output_connections.jpg
+elmo_trv35_rpi_wiring_diagram.png
+```
+
+**Hardware documentation note:** The photos identify component locations and handwritten connector labels, but they do not provide a complete circuit diagram, cable pinout, power specifications, or the procedure for mechanically modifying the projector. Do not use the photographs alone as electrical wiring instructions.
